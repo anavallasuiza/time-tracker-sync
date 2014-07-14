@@ -63,9 +63,18 @@ class Curl
         return $this;
     }
 
+    public function setOption($option, $value)
+    {
+        curl_setopt($this->connect, $option, $value);
+
+        return $this;
+    }
+
     public function setAuth(array $auth)
     {
         $this->auth = http_build_query($auth);
+
+        return $this;
     }
 
     public function get($url, array $data = [])
