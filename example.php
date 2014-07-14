@@ -24,6 +24,7 @@ $Sync->setActivities($Hamster->getAll('activities'));
 $Sync->setCategories($Hamster->getAll('categories'));
 $Sync->setFacts($Hamster->getAll('facts'));
 $Sync->setTags($Hamster->getAll('tags'));
+$Sync->setFactsTags($Hamster->getAll('fact_tags'));
 
 echo '<pre>';
 
