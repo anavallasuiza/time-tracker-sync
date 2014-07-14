@@ -95,7 +95,7 @@ class Curl
         }
 
         if ($this->settings['debug']) {
-            d($url);
+            echo '<pre><code>'.$url.'</code></pre>';
         }
 
         curl_setopt($this->connect, CURLOPT_URL, $url);
@@ -105,7 +105,7 @@ class Curl
 
         if (strpos($code, '20') !== 0) {
             if (is_object($json)) {
-                throw new \Exception(sprintf('Query can not be executed: %s (Code: %s)', $this->response->message, $code));
+                throw new \Exception(sprintf('Query can not be executed: %s (Code: %s)', $json->message, $code));
             } else {
                 throw new \Exception($this->response);
             }

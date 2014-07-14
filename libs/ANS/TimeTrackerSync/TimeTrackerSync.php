@@ -35,6 +35,11 @@ class TimeTrackerSync
         $this->tags = $this->compare($local, $this->curl->get('/tags')->data, 'name', 'name');
     }
 
+    public function setFactsTags($local)
+    {
+        $this->facts_tags = $local;
+    }
+
     private function compare($local, $remote, $local_key, $remote_key)
     {
         $local = json_decode(json_encode($local), true);
@@ -64,15 +69,20 @@ class TimeTrackerSync
             'activities' => $this->activities,
             'categories' => $this->categories,
             'facts' => $this->facts,
-            'tags' => $this->tags
+            'tags' => $this->tags,
+            'facts_tags' => $this->facts_tags
         ];
     }
 
     public function sync()
     {
         $this->syncCategories();
+        $this->syncTags();
+
         $this->syncActivities();
         $this->syncFacts();
+
+        $this->syncFactsTags();
 
         return $this;
     }
@@ -89,6 +99,23 @@ class TimeTrackerSync
             ]);
 
             $this->categories['assign'][$category['id']] = $response->id;
+        }
+
+        return $this;
+    }
+
+    public function syncTags()
+    {
+        if (empty($this->tags) || empty($this->tags['add'])) {
+            return $this;
+        }
+
+        foreach ($this->tags['add'] as $tag) {
+            $response = $this->curl->post('/tags', [
+                'name' => $tag['name']
+            ]);
+
+            $this->tags['assign'][$tag['id']] = $response->id;
         }
 
         return $this;
@@ -127,6 +154,44 @@ class TimeTrackerSync
             ]);
 
             $this->facts['assign'][$fact['id']] = $response->id;
+        }
+
+        return $this;
+    }
+
+    public function syncFactsTags()
+    {
+        if (empty($this->facts_tags)) {
+            return $this;
+        }
+
+        foreach ($this->facts_tags as &$value) {
+            $value['id'] = $this->facts['assign'][$value['fact_id']].'|'.$this->tags['assign'][$value['tag_id']];
+        }
+
+        unset($value);
+
+        $remote = $this->curl->get('/facts-tags')->data;
+
+        foreach ($remote as &$value) {
+            $value->id = $value->id_facts.'|'.$value->id_tags;
+        }
+
+        unset($value);
+
+        $this->facts_tags = $this->compare($this->facts_tags, $remote, 'id', 'id');
+
+        if (empty($this->facts_tags['add'])) {
+            return $this;
+        }
+
+        foreach ($this->facts_tags['add'] as $fact_tag) {
+            $response = $this->curl->post('/facts-tags', [
+                'id_facts' => $this->facts['assign'][$fact_tag['fact_id']],
+                'id_tags' => $this->tags['assign'][$fact_tag['tag_id']]
+            ]);
+
+            $this->facts_tags['assign'][$fact_tag['id']] = $response->id;
         }
 
         return $this;
