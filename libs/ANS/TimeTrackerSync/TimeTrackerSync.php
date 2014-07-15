@@ -149,6 +149,7 @@ class TimeTrackerSync
             $response = $this->curl->post('/facts', [
                 'start_time' => $fact['start_time'],
                 'end_time' => $fact['end_time'],
+                'description' => $fact['description'],
                 'remote_id' => $fact['id'],
                 'id_activities' => $this->activities['assign'][$fact['activity_id']],
             ]);
