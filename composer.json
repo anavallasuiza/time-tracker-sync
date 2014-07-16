@@ -30,8 +30,8 @@
     ],
     "require": {
         "php": ">=5.4",
-        "time-tracker-hamster/time-tracker-hamster": "master-dev",
-        "time-tracker-csv/time-tracker-csv": "master-dev"
+        "anavallasuiza/time-tracker-hamster": "master-dev",
+        "anavallasuiza/time-tracker-csv": "master-dev"
     },
     "config": {
         "vendor-dir": "vendor"
