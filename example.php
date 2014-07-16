@@ -23,7 +23,7 @@ $Sync->setConnector($Db);
 
 echo '<pre>';
 
-var_dump($Sync->sumamry());
+var_dump($Sync->summary());
 
 $Sync->sync();
 
