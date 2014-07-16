@@ -1,0 +1,44 @@
+{
+    "name": "anavallasuiza/time-tracker-sync",
+    "type": "library",
+    "description": "Time Tracker Sync",
+    "version": "1.0",
+    "keywords": ["php", "sync"],
+    "homepage": "https://github.com/anavallasuiza/time-tracker-sync/",
+    "license": "AGPL-3.0",
+    "authors": [
+        {
+            "name": "A Navalla Suíza",
+            "email": "idc@anavallasuiza.com",
+            "homepage": "http://anavallasuiza.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "idc@anavallasuiza.com",
+        "issues": "https://github.com/anavallasuiza/time-tracker-sync/issues"
+    },
+    "repositories": [
+         {
+             "type": "vcs",
+             "url": "https://github.com/anavallasuiza/time-tracker-hamster"
+         },
+         {
+             "type": "vcs",
+             "url": "https://github.com/anavallasuiza/time-tracker-csv"
+         }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "time-tracker-hamster/time-tracker-hamster": "master-dev",
+        "time-tracker-csv/time-tracker-csv": "master-dev"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    },
+    "autoload": {
+        "psr-0": {
+            "ANS\\Curl": "libs"
+        }
+    }
+}
