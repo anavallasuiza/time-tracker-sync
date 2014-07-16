@@ -77,7 +77,7 @@ class Curl
         return $this;
     }
 
-    public function get($url, array $data = [])
+    private function exec($url, array $data = [])
     {
         if (!is_resource($this->connect)) {
             $this->connect();
@@ -114,19 +114,42 @@ class Curl
         return $json;
     }
 
+    public function get($url, array $data = [])
+    {
+        if (!is_resource($this->connect)) {
+            $this->connect();
+        }
+
+        curl_setopt($this->connect, CURLOPT_CUSTOMREQUEST, 'GET');
+
+        return $this->exec($url, $data);
+    }
+
     public function post($url, array $data = [])
     {
         if (!is_resource($this->connect)) {
             $this->connect();
         }
 
+        curl_setopt($this->connect, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($this->connect, CURLOPT_POST, true);
         curl_setopt($this->connect, CURLOPT_POSTFIELDS, $data);
 
-        $response = $this->get($url, []);
+        $response = $this->exec($url);
 
         curl_setopt($this->connect, CURLOPT_POST, false);
 
         return $response;
+    }
+
+    public function delete($url, array $data = [])
+    {
+        if (!is_resource($this->connect)) {
+            $this->connect();
+        }
+
+        curl_setopt($this->connect, CURLOPT_CUSTOMREQUEST, 'DELETE');
+
+        return $this->exec($url, $data);
     }
 }

@@ -61,9 +61,10 @@ class TimeTrackerSync
         $local = json_decode(json_encode($local), true);
         $remote = json_decode(json_encode($remote), true);
 
+        $local_keys = array_column($local, $local_key);
         $remote_keys = array_column($remote, $remote_key);
 
-        $add = $assign = [];
+        $add = $del = $assign = [];
 
         foreach ($local as $row) {
             if (($key = array_search($row[$local_key], $remote_keys, true)) !== false) {
@@ -73,9 +74,16 @@ class TimeTrackerSync
             }
         }
 
+        foreach ($remote as $row) {
+            if (($key = array_search($row[$remote_key], $local_keys, true)) === false) {
+                $del[] = $row;
+            }
+        }
+
         return [
             'assign' => $assign,
-            'add' => $add
+            'add' => $add,
+            'del' => $del
         ];
     }
 
@@ -157,21 +165,32 @@ class TimeTrackerSync
 
     public function syncFacts()
     {
-        if (empty($this->facts) || empty($this->facts['add'])) {
+        if (empty($this->facts)) {
             return $this;
         }
 
-        foreach ($this->facts['add'] as $fact) {
-            $response = $this->curl->post('/facts', [
-                'start_time' => $fact['start_time'],
-                'end_time' => $fact['end_time'],
-                'description' => $fact['description'],
-                'hostname' => $this->hostname,
-                'remote_id' => $fact['id'],
-                'id_activities' => $this->activities['assign'][$fact['activity_id']],
-            ]);
+        if ($this->facts['add']) {
+            foreach ($this->facts['add'] as $fact) {
+                $response = $this->curl->post('/facts', [
+                    'start_time' => $fact['start_time'],
+                    'end_time' => $fact['end_time'],
+                    'description' => $fact['description'],
+                    'hostname' => $this->hostname,
+                    'remote_id' => $fact['id'],
+                    'id_activities' => $this->activities['assign'][$fact['activity_id']],
+                ]);
 
-            $this->facts['assign'][$fact['id']] = $response->id;
+                $this->facts['assign'][$fact['id']] = $response->id;
+            }
+        }
+
+        if ($this->facts['del']) {
+            foreach ($this->facts['del'] as $fact) {
+                $response = $this->curl->delete('/facts', [
+                    'remote_id' => $fact['remote_id'],
+                    'hostname' => $this->hostname,
+                ]);
+            }
         }
 
         return $this;
