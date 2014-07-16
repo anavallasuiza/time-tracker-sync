@@ -37,8 +37,9 @@
         "vendor-dir": "vendor"
     },
     "autoload": {
-        "psr-0": {
-            "ANS\\Curl": "libs"
+        "psr-4": {
+            "ANS\\Curl\\": "libs",
+            "ANS\\TimeTrackerSync\\": "libs/ANS/TimeTrackerSync"
         }
     }
 }
