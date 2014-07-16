@@ -17,6 +17,15 @@ class TimeTrackerSync
         $this->hostname = gethostname();
     }
 
+    public function getConnector($connector)
+    {
+        if (!class_exists($class = '\\ANS\\TimeTrackerSync\\Connectors\\'.$connector)) {
+            throw new \Exception(sprintf(_('Connector "%s" not exists'), $connector));
+        }
+
+        return new $class;
+    }
+
     public function setHostName($hostname)
     {
         $this->hostname = $hostname;
@@ -25,6 +34,17 @@ class TimeTrackerSync
     public function setCurl(Curl $curl)
     {
         $this->curl = $curl;
+    }
+
+    public function setConnector($connector)
+    {
+        $this->setActivities($connector->getActivities());
+        $this->setCategories($connector->getCategories());
+        $this->setFacts($connector->getFacts());
+        $this->setTags($connector->getTags());
+        $this->setFactsTags($connector->getFactsTags());
+
+        return $this;
     }
 
     public function setActivities($local)
@@ -67,7 +87,7 @@ class TimeTrackerSync
         $add = $del = $assign = [];
 
         foreach ($local as $row) {
-            if (($key = array_search($row[$local_key], $remote_keys, true)) !== false) {
+            if (($key = array_search($row[$local_key], $remote_keys)) !== false) {
                 $assign[$row['id']] = $remote[$key]['id'];
             } else {
                 $add[] = $row;
@@ -75,7 +95,7 @@ class TimeTrackerSync
         }
 
         foreach ($remote as $row) {
-            if (($key = array_search($row[$remote_key], $local_keys, true)) === false) {
+            if (($key = array_search($row[$remote_key], $local_keys)) === false) {
                 $del[] = $row;
             }
         }

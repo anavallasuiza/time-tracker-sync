@@ -18,23 +18,8 @@
         "email": "idc@anavallasuiza.com",
         "issues": "https://github.com/anavallasuiza/time-tracker-sync/issues"
     },
-    "repositories": [
-         {
-             "type": "vcs",
-             "url": "https://github.com/anavallasuiza/time-tracker-hamster"
-         },
-         {
-             "type": "vcs",
-             "url": "https://github.com/anavallasuiza/time-tracker-mac"
-         }
-    ],
     "require": {
-        "php": ">=5.4",
-        "anavallasuiza/time-tracker-hamster": "master-dev",
-        "anavallasuiza/time-tracker-mac": "master-dev"
-    },
-    "config": {
-        "vendor-dir": "vendor"
+        "php": ">=5.4"
     },
     "autoload": {
         "psr-4": {
