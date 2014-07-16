@@ -5,10 +5,22 @@ class TimeTrackerSync
 {
     private $curl;
 
+    private $hostname = '';
+
     private $activities = [];
     private $categories = [];
     private $facts = [];
     private $tags = [];
+
+    public function __construct()
+    {
+        $this->hostname = gethostname();
+    }
+
+    public function setHostName($hostname)
+    {
+        $this->hostname = $hostname;
+    }
 
     public function setCurl(\Curl $curl)
     {
@@ -27,7 +39,11 @@ class TimeTrackerSync
 
     public function setFacts($local)
     {
-        $this->facts = $this->compare($local, $this->curl->get('/facts')->data, 'id', 'remote_id');
+        $remote = $this->curl->get('/facts', [
+            'hostname' => $this->hostname
+        ]);
+
+        $this->facts = $this->compare($local, $remote->data, 'id', 'remote_id');
     }
 
     public function setTags($local)
@@ -150,6 +166,7 @@ class TimeTrackerSync
                 'start_time' => $fact['start_time'],
                 'end_time' => $fact['end_time'],
                 'description' => $fact['description'],
+                'hostname' => $this->hostname,
                 'remote_id' => $fact['id'],
                 'id_activities' => $this->activities['assign'][$fact['activity_id']],
             ]);
@@ -167,12 +184,20 @@ class TimeTrackerSync
         }
 
         foreach ($this->facts_tags as &$value) {
+            if (!isset($this->facts['assign'][$value['fact_id']])
+            || !isset($this->tags['assign'][$value['tag_id']])) {
+                $value = null;
+                continue;
+            }
+
             $value['id'] = $this->facts['assign'][$value['fact_id']].'|'.$this->tags['assign'][$value['tag_id']];
         }
 
-        unset($value);
+        $this->facts_tags = array_filter($this->facts_tags);
 
-        $remote = $this->curl->get('/facts-tags')->data;
+        $remote = $this->curl->get('/facts-tags', [
+            'hostname' => $this->hostname
+        ])->data;
 
         foreach ($remote as &$value) {
             $value->id = $value->id_facts.'|'.$value->id_tags;
