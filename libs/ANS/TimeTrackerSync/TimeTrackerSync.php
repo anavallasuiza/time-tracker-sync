@@ -22,7 +22,7 @@ class TimeTrackerSync
         $this->hostname = $hostname;
     }
 
-    public function setCurl(\Curl $curl)
+    public function setCurl(Curl $curl)
     {
         $this->curl = $curl;
     }

@@ -1,4 +1,6 @@
 <?php
+namespace ANS\TimeTrackerSync;
+
 class Curl
 {
     private $settings = [];

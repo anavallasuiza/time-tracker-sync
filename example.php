@@ -1,14 +1,9 @@
 <?php
-# Load external database API (hamster time tracker)
-require (__DIR__.'/../hamster/libs/ANS/Hamster/Hamster.php');
-require (__DIR__.'/libs/ANS/TimeTrackerSync/TimeTrackerSync.php');
-require (__DIR__.'/libs/curl.php');
+require (__DIR__.'/vendor/autoload.php');
 
-$Sync = new \ANS\TimeTrackerSync\TimeTrackerSync();
+$Sync = new ANS\TimeTrackerSync\TimeTrackerSync();
 
-$Hamster = new \ANS\Hamster\Hamster('/home/user/.local/share/hamster-applet/hamster.db');
-
-$Curl = new Curl([
+$Curl = new ANS\TimeTrackerSync\Curl([
     'base' => 'https://time.domain.com/api',
     'cookie' => 'cookie.txt'
 ]);
@@ -19,6 +14,8 @@ $Curl->setAuth([
 ]);
 
 $Sync->setCurl($Curl);
+
+$Hamster = new ANS\Hamster\Hamster('/home/user/.local/share/hamster-applet/hamster.db');
 
 $Sync->setActivities($Hamster->getAll('activities'));
 $Sync->setCategories($Hamster->getAll('categories'));
