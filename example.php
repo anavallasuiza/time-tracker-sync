@@ -1,5 +1,5 @@
 <?php
-require (__DIR__.'/vendor/autoload.php');
+require (__DIR__.'/libs/autoload.php');
 
 $Sync = new ANS\TimeTrackerSync\TimeTrackerSync();
 
@@ -15,17 +15,15 @@ $Curl->setAuth([
 
 $Sync->setCurl($Curl);
 
-$Hamster = new ANS\Hamster\Hamster('/home/user/.local/share/hamster-applet/hamster.db');
+$Db = $Sync->getConnector('Hamster');
 
-$Sync->setActivities($Hamster->getAll('activities'));
-$Sync->setCategories($Hamster->getAll('categories'));
-$Sync->setFacts($Hamster->getAll('facts'));
-$Sync->setTags($Hamster->getAll('tags'));
-$Sync->setFactsTags($Hamster->getAll('fact_tags'));
+$Db->setDb('/home/user/.local/share/hamster-applet/hamster.db');
+
+$Sync->setConnector($Db);
 
 echo '<pre>';
 
-var_dump($Sync->summary());
+var_dump($Sync->sumamry());
 
 $Sync->sync();
 
