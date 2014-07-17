@@ -204,7 +204,9 @@ class TimeTrackerSync
                     'id_activities' => $this->activities['assign'][$fact['activity_id']],
                 ]);
 
-                $this->facts['assign'][$fact['id']] = $response->id;
+                if ($response->id > 0) {
+                    $this->facts['assign'][$fact['id']] = $response->id;
+                }
             }
         }
 
@@ -227,8 +229,7 @@ class TimeTrackerSync
         }
 
         foreach ($this->facts_tags as &$value) {
-            if (!isset($this->facts['assign'][$value['fact_id']])
-            || !isset($this->tags['assign'][$value['tag_id']])) {
+            if (empty($this->facts['assign'][$value['fact_id']]) || empty($this->tags['assign'][$value['tag_id']])) {
                 $value = null;
                 continue;
             }
