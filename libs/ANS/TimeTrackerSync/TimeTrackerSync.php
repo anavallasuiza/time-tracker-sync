@@ -191,6 +191,10 @@ class TimeTrackerSync
 
         if ($this->facts['add']) {
             foreach ($this->facts['add'] as $fact) {
+                if (empty($fact['end_time'])) {
+                    continue;
+                }
+
                 $response = $this->curl->post('/facts', [
                     'start_time' => $fact['start_time'],
                     'end_time' => $fact['end_time'],

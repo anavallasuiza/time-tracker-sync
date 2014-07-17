@@ -42,6 +42,10 @@ class TimeTrackerMac implements Connector
         ];
 
         foreach ($this->db as $row) {
+            if (empty($row[4])) {
+                continue;
+            }
+
             $activity_id = $this->getId($row[0]);
             $tag_id = $this->getId($row[1]);
             $fact_id = strtotime($row[3]);
@@ -64,7 +68,7 @@ class TimeTrackerMac implements Connector
                 'activity_id' => $activity_id
             ];
 
-            $this->data['facts_tags'][] = [
+            $this->data['facts_tags'][$fact_id.'|'.$tag_id] = [
                 'fact_id' => $fact_id,
                 'tag_id' => $tag_id
             ];
