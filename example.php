@@ -9,8 +9,8 @@ $Curl = new ANS\TimeTrackerSync\Curl([
 ]);
 
 $Curl->setAuth([
-    'email' => 'user@domain.com',
-    'hash' => 'a38142342423b7af21132c80677d739ec4b28ea'
+    'user' => 'user@domain.com',
+    'secret' => 'a38142342423b7af21132c80677d739ec4b28ea'
 ]);
 
 $Sync->setCurl($Curl);
