@@ -142,6 +142,10 @@ class TimeTrackerSync
                 'name' => $category['name']
             ]);
 
+            if (!is_object($response) || empty($response->id)) {
+                continue;
+            }
+
             $this->categories['assign'][$category['id']] = $response->id;
         }
 
@@ -158,6 +162,10 @@ class TimeTrackerSync
             $response = $this->curl->post('/tags', [
                 'name' => $tag['name']
             ]);
+
+            if (!is_object($response) || empty($response->id)) {
+                continue;
+            }
 
             $this->tags['assign'][$tag['id']] = $response->id;
         }
@@ -176,6 +184,10 @@ class TimeTrackerSync
                 'name' => $activity['name'],
                 'id_categories' => $this->categories['assign'][$activity['category_id']]
             ]);
+
+            if (!is_object($response) || empty($response->id)) {
+                continue;
+            }
 
             $this->activities['assign'][$activity['id']] = $response->id;
         }
@@ -204,7 +216,7 @@ class TimeTrackerSync
                     'id_activities' => $this->activities['assign'][$fact['activity_id']],
                 ]);
 
-                if ($response->id > 0) {
+                if (is_object($response) && ($response->id > 0)) {
                     $this->facts['assign'][$fact['id']] = $response->id;
                 }
             }
@@ -260,6 +272,10 @@ class TimeTrackerSync
                 'id_facts' => $this->facts['assign'][$fact_tag['fact_id']],
                 'id_tags' => $this->tags['assign'][$fact_tag['tag_id']]
             ]);
+
+            if (!is_object($response) || empty($response->id)) {
+                continue;
+            }
 
             $this->facts_tags['assign'][$fact_tag['id']] = $response->id;
         }
