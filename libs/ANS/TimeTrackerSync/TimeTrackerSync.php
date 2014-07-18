@@ -137,7 +137,13 @@ class TimeTrackerSync
             return $this;
         }
 
+        $assign = &$this->categories['assign'];
+
         foreach ($this->categories['add'] as $category) {
+            if (empty($category['name'])) {
+                continue;
+            }
+
             $response = $this->curl->post('/categories', [
                 'name' => $category['name']
             ]);
@@ -146,7 +152,7 @@ class TimeTrackerSync
                 continue;
             }
 
-            $this->categories['assign'][$category['id']] = $response->id;
+            $assign[$category['id']] = $response->id;
         }
 
         return $this;
@@ -158,7 +164,13 @@ class TimeTrackerSync
             return $this;
         }
 
+        $assign = &$this->tags['assign'];
+
         foreach ($this->tags['add'] as $tag) {
+            if (empty($tag['name'])) {
+                continue;
+            }
+
             $response = $this->curl->post('/tags', [
                 'name' => $tag['name']
             ]);
@@ -167,7 +179,7 @@ class TimeTrackerSync
                 continue;
             }
 
-            $this->tags['assign'][$tag['id']] = $response->id;
+            $assign[$tag['id']] = $response->id;
         }
 
         return $this;
@@ -179,8 +191,13 @@ class TimeTrackerSync
             return $this;
         }
 
+        $categories = $this->categories['assign'];
+        $assign = &$this->activities['assign'];
+
         foreach ($this->activities['add'] as $activity) {
-            if (empty($this->categories['assign'][$activity['category_id']])) {
+            if (empty($activity['name'])
+            || empty($activity['category_id'])
+            || empty($categories[$activity['category_id']])) {
                 continue;
             }
 
@@ -193,7 +210,7 @@ class TimeTrackerSync
                 continue;
             }
 
-            $this->activities['assign'][$activity['id']] = $response->id;
+            $assign[$activity['id']] = $response->id;
         }
 
         return $this;
@@ -205,9 +222,14 @@ class TimeTrackerSync
             return $this;
         }
 
+        $activities = $this->activities['assign'];
+        $assign = &$this->facts['assign'];
+
         if ($this->facts['add']) {
             foreach ($this->facts['add'] as $fact) {
-                if (empty($fact['end_time']) || empty($this->activities['assign'][$fact['activity_id']])) {
+                if (empty($fact['end_time'])
+                || empty($fact['activity_id'])
+                || empty($activities[$fact['activity_id']])) {
                     continue;
                 }
 
@@ -217,11 +239,11 @@ class TimeTrackerSync
                     'description' => $fact['description'],
                     'hostname' => $this->hostname,
                     'remote_id' => $fact['id'],
-                    'id_activities' => $this->activities['assign'][$fact['activity_id']],
+                    'id_activities' => $activities[$fact['activity_id']],
                 ]);
 
                 if (is_object($response) && ($response->id > 0)) {
-                    $this->facts['assign'][$fact['id']] = $response->id;
+                    $assign[$fact['id']] = $response->id;
                 }
             }
         }
@@ -244,13 +266,19 @@ class TimeTrackerSync
             return $this;
         }
 
+        $facts = $this->facts['assign'];
+        $tags = $this->tags['assign'];
+
         foreach ($this->facts_tags as &$value) {
-            if (empty($this->facts['assign'][$value['fact_id']]) || empty($this->tags['assign'][$value['tag_id']])) {
+            if (empty($value['fact_id'])
+            || empty($value['tag_id'])
+            || empty($facts[$value['fact_id']])
+            || empty($tags[$value['tag_id']])) {
                 $value = null;
                 continue;
             }
 
-            $value['id'] = $this->facts['assign'][$value['fact_id']].'|'.$this->tags['assign'][$value['tag_id']];
+            $value['id'] = $facts[$value['fact_id']].'|'.$tags[$value['tag_id']];
         }
 
         $this->facts_tags = array_filter($this->facts_tags);
@@ -271,21 +299,26 @@ class TimeTrackerSync
             return $this;
         }
 
+        $assign = &$this->facts_tags['assign'];
+
         foreach ($this->facts_tags['add'] as $fact_tag) {
-            if (empty($this->facts['assign'][$fact_tag['fact_id']]) || empty($this->tags['assign'][$fact_tag['tag_id']])) {
+            if (empty($fact_tag['fact_id'])
+            || empty($fact_tag['tag_id'])
+            || empty($facts[$fact_tag['fact_id']])
+            || empty($tags[$fact_tag['tag_id']])) {
                 continue;
             }
 
             $response = $this->curl->post('/facts-tags', [
-                'id_facts' => $this->facts['assign'][$fact_tag['fact_id']],
-                'id_tags' => $this->tags['assign'][$fact_tag['tag_id']]
+                'id_facts' => $facts[$fact_tag['fact_id']],
+                'id_tags' => $tags[$fact_tag['tag_id']]
             ]);
 
             if (!is_object($response) || empty($response->id)) {
                 continue;
             }
 
-            $this->facts_tags['assign'][$fact_tag['id']] = $response->id;
+            $assign[$fact_tag['id']] = $response->id;
         }
 
         return $this;
