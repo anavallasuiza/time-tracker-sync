@@ -180,6 +180,10 @@ class TimeTrackerSync
         }
 
         foreach ($this->activities['add'] as $activity) {
+            if (empty($this->categories['assign'][$activity['category_id']])) {
+                continue;
+            }
+
             $response = $this->curl->post('/activities', [
                 'name' => $activity['name'],
                 'id_categories' => $this->categories['assign'][$activity['category_id']]
@@ -203,7 +207,7 @@ class TimeTrackerSync
 
         if ($this->facts['add']) {
             foreach ($this->facts['add'] as $fact) {
-                if (empty($fact['end_time'])) {
+                if (empty($fact['end_time']) || empty($this->activities['assign'][$fact['activity_id']])) {
                     continue;
                 }
 
@@ -268,6 +272,10 @@ class TimeTrackerSync
         }
 
         foreach ($this->facts_tags['add'] as $fact_tag) {
+            if (empty($this->facts['assign'][$fact_tag['fact_id']]) || empty($this->tags['assign'][$fact_tag['tag_id']])) {
+                continue;
+            }
+
             $response = $this->curl->post('/facts-tags', [
                 'id_facts' => $this->facts['assign'][$fact_tag['fact_id']],
                 'id_tags' => $this->tags['assign'][$fact_tag['tag_id']]
