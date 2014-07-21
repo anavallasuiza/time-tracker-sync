@@ -41,6 +41,8 @@ class TimeTrackerMac implements Connector
             'facts_tags' => []
         ];
 
+        $start_time = strtotime(self::FACTS_TIME_LIMIT);
+
         foreach ($this->db as $row) {
             if (empty($row[4])) {
                 continue;
@@ -59,6 +61,10 @@ class TimeTrackerMac implements Connector
                 'id' => $tag_id,
                 'name' => $row[1]
             ];
+
+            if ($fact_id < $start_time) {
+                continue;
+            }
 
             $this->data['facts'][$fact_id] = [
                 'id' => $fact_id,

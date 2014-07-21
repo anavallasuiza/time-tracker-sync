@@ -40,7 +40,9 @@ class Hamster implements Connector
 
     public function getFacts()
     {
-        return $this->query('SELECT * FROM `facts` WHERE end_time NOT NULL;');
+        return $this->query('SELECT * FROM `facts` WHERE start_time >= :start_time AND end_time NOT NULL;', [
+            ':start_time' => date('Y-m-d H:i:s', strtotime(self::FACTS_TIME_LIMIT))
+        ]);
     }
 
     public function getTags()
@@ -50,6 +52,8 @@ class Hamster implements Connector
 
     public function getFactsTags()
     {
-        return $this->query('SELECT `fact_tags`.* FROM `fact_tags` INNER JOIN (`facts`) ON (`fact_tags`.`fact_id` = `facts`.`id`) WHERE `facts`.`end_time` NOT NULL;');
+        return $this->query('SELECT `fact_tags`.* FROM `fact_tags` INNER JOIN (`facts`) ON (`fact_tags`.`fact_id` = `facts`.`id`) WHERE `facts`.`start_time` >= :start_time AND `facts`.`end_time` NOT NULL;', [
+            ':start_time' => date('Y-m-d H:i:s', strtotime(self::FACTS_TIME_LIMIT))
+        ]);
     }
 }
