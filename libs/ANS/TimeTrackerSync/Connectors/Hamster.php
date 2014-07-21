@@ -33,11 +33,6 @@ class Hamster implements Connector
         return $this->query('SELECT * FROM `activities` WHERE deleted IS NULL;');
     }
 
-    public function getCategories()
-    {
-        return $this->query('SELECT * FROM `categories`;');
-    }
-
     public function getFacts()
     {
         return $this->query('SELECT * FROM `facts` WHERE start_time >= :start_time AND end_time NOT NULL;', [

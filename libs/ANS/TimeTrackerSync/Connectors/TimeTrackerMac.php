@@ -99,11 +99,6 @@ class TimeTrackerMac implements Connector
         return $this->data['activities'];
     }
 
-    public function getCategories()
-    {
-        return [];
-    }
-
     public function getFacts()
     {
         return $this->data['facts'];
