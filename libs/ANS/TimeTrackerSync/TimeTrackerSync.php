@@ -40,6 +40,8 @@ class TimeTrackerSync
 
     public function setConnector($connector)
     {
+        $this->log = [];
+
         $this->setActivities($connector->getActivities());
         $this->setFacts($connector->getFacts());
         $this->setTags($connector->getTags());
