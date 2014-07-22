@@ -1,6 +1,8 @@
 <?php
 namespace ANS\TimeTrackerSync;
 
+use Exception;
+
 class TimeTrackerSync
 {
     private $curl;
@@ -10,6 +12,7 @@ class TimeTrackerSync
     private $activities = [];
     private $facts = [];
     private $tags = [];
+    private $log = [];
 
     public function __construct()
     {
@@ -47,21 +50,49 @@ class TimeTrackerSync
 
     public function setActivities($local)
     {
-        $this->activities = $this->compare($local, $this->curl->get('/activities')->data, 'name', 'name');
+        $this->activities = ['add' => [], 'del' => [], 'assign' => []];
+
+        try {
+            $remote = $this->curl->get('/activities');
+        } catch (Exception $e) {
+            return $this->setLog(sprintf('Activities could not be loaded: %s', $e->getMessage()), 'danger');
+        }
+
+        $this->activities = $this->compare($local, $remote->data, 'name', 'name');
+
+        return $this;
     }
 
     public function setFacts($local)
     {
-        $remote = $this->curl->get('/facts', [
-            'hostname' => $this->hostname
-        ]);
+        $this->facts = ['add' => [], 'del' => [], 'assign' => []];
+
+        try {
+            $remote = $this->curl->get('/facts', [
+                'hostname' => $this->hostname
+            ]);
+        } catch (Exception $e) {
+            return $this->setLog(sprintf('Facts could not be loaded: %s', $e->getMessage()), 'danger');
+        }
 
         $this->facts = $this->compare($local, $remote->data, 'id', 'remote_id');
+
+        return $this;
     }
 
     public function setTags($local)
     {
-        $this->tags = $this->compare($local, $this->curl->get('/tags')->data, 'name', 'name');
+        $this->tags = ['add' => [], 'del' => [], 'assign' => []];
+
+        try {
+            $remote = $this->curl->get('/tags');
+        } catch (Exception $e) {
+            return $this->setLog(sprintf('Tags could not be loaded: %s', $e->getMessage()), 'danger');
+        }
+
+        $this->tags = $this->compare($local, $remote->data, 'name', 'name');
+
+        return $this;
     }
 
     public function setFactsTags($local)
@@ -110,6 +141,19 @@ class TimeTrackerSync
         ];
     }
 
+    private function setLog($message, $status) {
+        $this->log[] = [
+            'message' => $message,
+            'status' => $status
+        ];
+
+        return $this;
+    }
+
+    public function getLog() {
+        return $this->log;
+    }
+
     public function sync()
     {
         $this->syncTags();
@@ -131,16 +175,25 @@ class TimeTrackerSync
 
         foreach ($this->tags['add'] as $tag) {
             if (empty($tag['name'])) {
+                $this->setLog('Tag can not be added because has an emtpy name', 'danger');
                 continue;
             }
 
-            $response = $this->curl->post('/tags', [
-                'name' => $tag['name']
-            ]);
-
-            if (!is_object($response) || empty($response->id)) {
+            try {
+                $response = $this->curl->post('/tags', [
+                    'name' => $tag['name']
+                ]);
+            } catch (Exception $e) {
+                $this->setLog(sprintf('Tag %s could not be added: %s', $tag['name'], $e->getMessage()), 'danger');
                 continue;
             }
+
+            if (empty($response->id)) {
+                $this->setLog(sprintf('Tag %s could not be added. Empty response', $tag['name']), 'danger');
+                continue;
+            }
+
+            $this->setLog(sprintf('Tag %s added successfully', $tag['name']), 'success');
 
             $assign[$tag['id']] = $response->id;
         }
@@ -158,16 +211,25 @@ class TimeTrackerSync
 
         foreach ($this->activities['add'] as $activity) {
             if (empty($activity['name'])) {
+                $this->setLog('Activity can not be added because has an emtpy name', 'danger');
                 continue;
             }
 
-            $response = $this->curl->post('/activities', [
-                'name' => $activity['name']
-            ]);
-
-            if (!is_object($response) || empty($response->id)) {
+            try {
+                $response = $this->curl->post('/activities', [
+                    'name' => $activity['name']
+                ]);
+            } catch (Exception $e) {
+                $this->setLog(sprintf('Activity %s could not be added: %s', $activity['name'], $e->getMessage()), 'danger');
                 continue;
             }
+
+            if (empty($response->id)) {
+                $this->setLog(sprintf('Activity %s could not be added. Empty response', $activity['name']), 'danger');
+                continue;
+            }
+
+            $this->setLog(sprintf('Activity %s added successfully', $activity['name']), 'success');
 
             $assign[$activity['id']] = $response->id;
         }
@@ -186,33 +248,63 @@ class TimeTrackerSync
 
         if ($this->facts['add']) {
             foreach ($this->facts['add'] as $fact) {
-                if (empty($fact['end_time'])
-                || empty($fact['activity_id'])
-                || empty($activities[$fact['activity_id']])) {
+                $name = $fact['start_time'].' - '.$fact['end_time'];
+
+                if (empty($fact['end_time'])) {
+                    $this->setLog(sprintf('Fact %s can not be added because is not finished', $name), 'warning');
                     continue;
                 }
 
-                $response = $this->curl->post('/facts', [
-                    'start_time' => $fact['start_time'],
-                    'end_time' => $fact['end_time'],
-                    'description' => $fact['description'],
-                    'hostname' => $this->hostname,
-                    'remote_id' => $fact['id'],
-                    'id_activities' => $activities[$fact['activity_id']],
-                ]);
-
-                if (is_object($response) && ($response->id > 0)) {
-                    $assign[$fact['id']] = $response->id;
+                if (empty($fact['activity_id'])) {
+                    $this->setLog(sprintf('Fact %s can not be added because has not activity', $name), 'danger');
+                    continue;
                 }
+
+                if (empty($activities[$fact['activity_id']])) {
+                    $this->setLog(sprintf('Fact %s can not be added because activity not exists', $name), 'danger');
+                    continue;
+                }
+
+                $total = (int)round(((new \Datetime($fact['end_time']))->getTimestamp() - (new \Datetime($fact['start_time']))->getTimestamp()) / 60);
+
+                try {
+                    $response = $this->curl->post('/facts', [
+                        'start_time' => $fact['start_time'],
+                        'end_time' => $fact['end_time'],
+                        'time' => sprintf('%01d:%02d', floor($total / 60), ($total % 60)),
+                        'description' => $fact['description'],
+                        'hostname' => $this->hostname,
+                        'remote_id' => $fact['id'],
+                        'id_activities' => $activities[$fact['activity_id']],
+                    ]);
+                } catch (Exception $e) {
+                    $this->setLog(sprintf('Fact %s could not be added: %s', $name, $e->getMessage()), 'danger');
+                    continue;
+                }
+
+                if (empty($response->id)) {
+                    $this->setLog(sprintf('Fact %s could not be added. Empty response', $name), 'warning');
+                    continue;
+                }
+
+                $this->setLog(sprintf('Fact %s added successfully', $name), 'success');
+
+                $assign[$fact['id']] = $response->id;
             }
         }
 
         if ($this->facts['del']) {
             foreach ($this->facts['del'] as $fact) {
-                $response = $this->curl->delete('/facts', [
-                    'remote_id' => $fact['remote_id'],
-                    'hostname' => $this->hostname,
-                ]);
+                $name = $fact['start_time'].' - '.$fact['end_time'];
+
+                try {
+                    $response = $this->curl->delete('/facts', [
+                        'remote_id' => $fact['remote_id'],
+                        'hostname' => $this->hostname,
+                    ]);
+                } catch (Exception $e) {
+                    $this->setLog(sprintf('Fact %s could not be deleted: %s', $name, $e->getMessage()), 'danger');
+                }
             }
         }
 
@@ -242,9 +334,14 @@ class TimeTrackerSync
 
         $this->facts_tags = array_filter($this->facts_tags);
 
-        $remote = $this->curl->get('/facts-tags', [
-            'hostname' => $this->hostname
-        ])->data;
+        try {
+            $remote = $this->curl->get('/facts-tags', [
+                'hostname' => $this->hostname
+            ])->data;
+        } catch (Exception $e) {
+            $this->setLog(sprintf('Facts and Tags relation could not be loaded', $e->getMessage()), 'danger');
+            return $this;
+        }
 
         foreach ($remote as &$value) {
             $value->id = $value->id_facts.'|'.$value->id_tags;
@@ -268,12 +365,16 @@ class TimeTrackerSync
                 continue;
             }
 
-            $response = $this->curl->post('/facts-tags', [
-                'id_facts' => $facts[$fact_tag['fact_id']],
-                'id_tags' => $tags[$fact_tag['tag_id']]
-            ]);
+            try{
+                $response = $this->curl->post('/facts-tags', [
+                    'id_facts' => $facts[$fact_tag['fact_id']],
+                    'id_tags' => $tags[$fact_tag['tag_id']]
+                ]);
+            } catch (Exception $e) {
+                continue;
+            }
 
-            if (!is_object($response) || empty($response->id)) {
+            if (empty($response->id)) {
                 continue;
             }
 

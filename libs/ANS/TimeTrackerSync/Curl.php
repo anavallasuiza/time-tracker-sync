@@ -107,11 +107,15 @@ class Curl
         $code = curl_getinfo($this->connect, CURLINFO_HTTP_CODE);
 
         if (strpos($code, '20') !== 0) {
-            if (is_object($json) && isset($json->message)) {
-                throw new \Exception(sprintf('Query can not be executed: %s (Code: %s)', $json->message, $code));
-            } else {
-                throw new \Exception($this->response);
+            if (is_object($json)) {
+                if (isset($json->message)) {
+                    throw new \Exception(sprintf('Query can not be executed: %s (Code: %s)', $json->message, $code));
+                } if (isset($json->error)) {
+                    throw new \Exception(sprintf('Query can not be executed: %s (Line: %s)', $json->error->message, $json->error->line));
+                }
             }
+
+            throw new \Exception($this->response);
         }
 
         return $json;
