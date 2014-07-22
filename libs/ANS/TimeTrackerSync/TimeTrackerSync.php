@@ -295,7 +295,7 @@ class TimeTrackerSync
 
         if ($this->facts['del']) {
             foreach ($this->facts['del'] as $fact) {
-                $name = $fact['start_time'].' - '.$fact['end_time'];
+                $name = $fact['start_time']['date'].' - '.$fact['end_time']['date'];
 
                 try {
                     $response = $this->curl->delete('/facts', [
