@@ -102,10 +102,32 @@ class TimeTrackerSync
         $this->facts_tags = $local;
     }
 
+    private static function toUTF($value)
+    {
+        if (is_object($value) || is_array($value)) {
+            if (is_object($value)) {
+                $value = (array)$value;
+            }
+
+            return array_map(array(__CLASS__, 'toUTF'), $value);
+        }
+
+        if ((mb_detect_encoding($value) === 'UTF-8') && mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        } else {
+            return utf8_encode($value);
+        }
+    }
+
+    private static function toArray($data)
+    {
+        return json_decode(json_encode(self::toUTF($data)), true);
+    }
+
     private function compare($local, $remote, $local_key, $remote_key)
     {
-        $local = json_decode(json_encode($local), true);
-        $remote = json_decode(json_encode($remote), true);
+        $local = self::toArray($local);
+        $remote = self::toArray($remote);
 
         $local_keys = array_column($local, $local_key);
         $remote_keys = array_column($remote, $remote_key);
