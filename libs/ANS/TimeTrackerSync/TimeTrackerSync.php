@@ -5,6 +5,8 @@ use Exception;
 
 class TimeTrackerSync
 {
+    const FACTS_TIME_LIMIT = '-1 month';
+
     private $curl;
 
     private $hostname = '';

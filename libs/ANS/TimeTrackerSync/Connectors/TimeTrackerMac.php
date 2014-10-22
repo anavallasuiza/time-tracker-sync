@@ -41,7 +41,7 @@ class TimeTrackerMac implements Connector
             'facts_tags' => []
         ];
 
-        $start_time = strtotime(self::FACTS_TIME_LIMIT);
+        $start_time = strtotime(date('Y-m-d 00:00:00', strtotime(self::FACTS_TIME_LIMIT)));
 
         foreach ($this->db as $row) {
             if (empty($row[4])) {
