@@ -131,8 +131,8 @@ class TimeTrackerSync
         $local = self::toArray($local);
         $remote = self::toArray($remote);
 
-        $local_keys = array_column($local, $local_key);
-        $remote_keys = array_column($remote, $remote_key);
+        $local_keys = (array)array_column($local, $local_key);
+        $remote_keys = (array)array_column($remote, $remote_key);
 
         $add = $del = $assign = [];
 
